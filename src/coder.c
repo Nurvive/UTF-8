@@ -50,38 +50,39 @@ uint32_t decode(const CodeUnits *codeunits) {
   } else if (codeunits->length == 4) {
     result = codeunits->code[3] & 0x7F;
     result += (codeunits->code[2] & 0x7F) * 64;
-    result += (codeunits->code[1] & 0x0F) * 64 * 64;
+    result += (codeunits->code[1] & 0x7F) * 64 * 64;
     result += (codeunits->code[0] & 0x07) * 64 * 64 * 64;
   }
   return result;
 }
 
-int read_next_code_unit(FILE *fin, CodeUnits *codeUnits) {
+int read_next_code_unit(FILE *in, CodeUnits *codeunits) {
   uint8_t byte;
-  fread(&byte, sizeof(uint8_t), 1, fin);
+
+  fread(&byte, sizeof(uint8_t), 1, in);
   if ((byte & 0xF0) == 0xF0) {
-    codeUnits->length = 4;
+    codeunits->length = 4;
   } else if ((byte & 0xE0) == 0xE0) {
-    codeUnits->length = 3;
+    codeunits->length = 3;
   } else if ((byte & 0xC0) == 0xC0) {
-    codeUnits->length = 2;
+    codeunits->length = 2;
   } else if ((byte | 0x80) != byte) {
-    codeUnits->length = 1;
+    codeunits->length = 1;
   } else {
-    codeUnits->length = 0;
+    codeunits->length = 0;
     return 0;
   }
 
-  codeUnits->code[0] = byte;
-  if (codeUnits->length != 1) {
-    if (!fread(codeUnits->code + 1, sizeof(uint8_t), codeUnits->length - 1,
-               fin)) {
+  codeunits->code[0] = byte;
+  if (codeunits->length != 1) {
+    if (!fread(codeunits->code + 1, sizeof(uint8_t), codeunits->length - 1,
+               in)) {
       return -1;
     }
-    for (size_t i = 1; i < codeUnits->length; i++) {
-      if (((codeUnits->code[i] | 0x40) == codeUnits->code[i]) ||
-          (codeUnits->code[i] | 0x80) != codeUnits->code[i]) {
-        codeUnits->length = 0;
+    for (size_t i = 1; i < codeunits->length; i++) {
+      if (((codeunits->code[i] | 0x40) == codeunits->code[i]) ||
+          (codeunits->code[i] | 0x80) != codeunits->code[i]) {
+        codeunits->length = 0;
         return 0;
       }
     }

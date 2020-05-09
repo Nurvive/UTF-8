@@ -2,7 +2,7 @@
 #include "coder.h"
 #include <inttypes.h>
 int encode_file(const char *in_file_name, const char *out_file_name) {
-  FILE *in = fopen(in_file_name, "rb");
+  FILE *in = fopen(in_file_name, "r");
   FILE *out = fopen(out_file_name, "wb");
   if ((in == NULL) || (out == NULL)) {
     printf("Error: invalid files\n");
@@ -10,7 +10,11 @@ int encode_file(const char *in_file_name, const char *out_file_name) {
   }
   int code_point;
   while (!feof(in)) {
-    if (!fscanf(in, "%" SCNx32, &code_point)) {
+    int y = fscanf(in, "%" SCNx32, &code_point);
+    if (y == EOF) {
+      return 0;
+    }
+    if (!y) {
       printf("Error: empty file\n");
       return -1;
     }
@@ -42,8 +46,7 @@ int decode_file(const char *in_file_name, const char *out_file_name) {
       return -1;
     }
     if (codeunits.code[0] != 0 && codeunits.length != 0) {
-      uint32_t x = decode(&codeunits);
-      if (!fprintf(out, "%" PRIx32 "\n", x)) {
+      if (!fprintf(out, "%" PRIx32 "\n", decode(&codeunits))) {
         printf("Error: invalid writing\n");
         return -1;
       }

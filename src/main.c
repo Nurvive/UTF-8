@@ -10,8 +10,6 @@ int error() {
 }
 
 int main(int argc, char const *argv[]) {
-  encode_file("hex.txt", "uhex.bin");
-  decode_file("uhex.bin", "h.txt");
   if (argc != 4) {
     error();
     return -1;
